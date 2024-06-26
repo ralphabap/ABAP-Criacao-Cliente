@@ -1,0 +1,65 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>LZZIFG_INTERFACES_CUSTOMERTOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Description: LZZIFG_INTERFACES_CUSTOMERTOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b> Interface de Cliente com SASC</b></font>
+<hr>
+<pre width="150">
+FUNCTION-POOL zzifg_interfaces_customer
+  MESSAGE-ID zzifm.
+
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+<font color ="#0000FF">* Pools</font>
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+TYPE-POOLS zzifc.
+
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+<font color ="#0000FF">* Types</font>
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+TYPES: BEGIN OF tp_knb1      ,
+        kunnr TYPE knb1-kunnr,
+        bukrs TYPE knb1-bukrs,
+       END OF tp_knb1.
+
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+<font color ="#0000FF">* Internal Table</font>
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+DATA: it_knb1          TYPE TABLE OF tp_knb1     ,
+      it_bdc           TYPE TABLE OF bdcdata     ,
+      it_msg           TYPE TABLE OF bdcmsgcoll  .
+
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+<font color ="#0000FF">* Work Area</font>
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+DATA: wa_generaldetail TYPE bapivendor_04,
+      wa_companydetail TYPE bapivendor_05,
+      it_bankdetail    TYPE TABLE OF bapivendor_06.
+
+DATA: wa_customer_data TYPE zzifs_fst_customer_data,
+      wa_ifc_cus001    TYPE zzift_ifc_cus001     ,
+      wa_ifc_vdr002    TYPE zzift_ifc_vdr002     ,
+      wa_ifc_vdr003    TYPE zzift_ifc_vdr003     ,
+      wa_knb1          TYPE tp_knb1              ,
+      wa_bdc           TYPE bdcdata              ,
+      wa_msg           TYPE bdcmsgcoll           ,
+      wa_opt           TYPE ctu_params           .
+
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+<font color ="#0000FF">* Variaveis</font>
+<font color ="#0000FF">* ----------------------------------------------------------------------</font>
+DATA: v_legacy_id      TYPE zzife_legacy_id,
+      v_kunnr          TYPE kna1-kunnr     ,
+      v_title          TYPE ad_titletx     ,
+      v_customer       TYPE lifnr          ,
+      v_trans(4)       TYPE c              ,
+      v_street2(35)    TYPE c              .
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download 46cd version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 701
+</font>
+</body>
+</html>

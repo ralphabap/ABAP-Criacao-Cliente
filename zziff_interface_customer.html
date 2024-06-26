@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZZIFF_INTERFACE_CUSTOMER</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for function: ZZIFF_INTERFACE_CUSTOMER</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description: Interface de Cliente com SASC</b></font>
+<hr>
+<pre width="150">
+FUNCTION zziff_interface_customer .
+<font color ="#0000FF">*"----------------------------------------------------------------------</font>
+<font color ="#0000FF">*"*"Interface local:</font>
+<font color ="#0000FF">*"  IMPORTING</font>
+<font color ="#0000FF">*"     REFERENCE(PI_MODE) TYPE  CTU_MODE DEFAULT 'N'</font>
+<font color ="#0000FF">*"     REFERENCE(PI_LEGACY_ID) TYPE  ZZIFE_LEGACY_ID</font>
+<font color ="#0000FF">*"     REFERENCE(SI_CUSTOMER_DATA) TYPE  ZZIFS_FST_CUSTOMER_DATA</font>
+<font color ="#0000FF">*"  EXCEPTIONS</font>
+<font color ="#0000FF">*"      STANDARD_ERROR_BATCH</font>
+<font color ="#0000FF">*"      CUSTOMER_NOT_FOUND</font>
+<font color ="#0000FF">*"      CUSTOMER_ALREADY_EXIST</font>
+<font color ="#0000FF">*"      CUSTOMER_CODE_NOT_FOUND</font>
+<font color ="#0000FF">*"      CNPJ_CPF_IS_EMPTY</font>
+<font color ="#0000FF">*"      CUSTOMER_DATA_IS_EMPTY</font>
+<font color ="#0000FF">*"----------------------------------------------------------------------</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------</font>
+<font color ="#0000FF">* Programa : ZZIFF_INTERFACE_CUSTOMER</font>
+<font color ="#0000FF">* Cliente  : WALMART</font>
+<font color ="#0000FF">* Módulo   : FI</font>
+<font color ="#0000FF">* Transação:</font>
+<font color ="#0000FF">* Descrição: Interface de Cliente com SASC</font>
+<font color ="#0000FF">* Autor: Rugde Chouman          Data: 01/06/2010</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------</font>
+<font color ="#0000FF">* Histórico de Alterações:</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------</font>
+<font color ="#0000FF">* Data       |Change #  |Autor            |Alteração</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------</font>
+<font color ="#0000FF">* 01/06/2010 |D01K901210|Rugde Chouman    |Desenvolvimento Inicial</font>
+<font color ="#0000FF">*---------------------------------------------------------------------------</font>
+
+<font color ="#0000FF">*       <a href ="global-zziff_interface_customer.html">Global data declarations</a></font>
+  wa_customer_data = si_customer_data.
+  v_customer       = wa_customer_data-lifnr.
+  v_legacy_id      = pi_legacy_id.
+
+  REFRESH: it_knb1 .
+
+<font color ="#0000FF">* Verifica se o existe dados na estrutura</font>
+  IF  wa_customer_data IS INITIAL.
+    MESSAGE e038 RAISING customer_data_is_empty.
+  ENDIF.
+
+<font color ="#0000FF">* Caso o tipo de Operação preenchido de forma incorreta</font>
+  IF  wa_customer_data-operation CN 'IAEBUR'.
+    MESSAGE ID  'ZZIFM'
+        TYPE    'E'
+        NUMBER  '037'
+        WITH    wa_customer_data-lifnr  wa_customer_data-bukrs
+        RAISING others.
+  ENDIF.
+
+  CASE wa_customer_data-operation.
+
+    WHEN zzifc_operation_itf_incluir OR  "Inclusão.
+         zzifc_operation_itf_alterar.    "Modificação
+
+<font color ="#0000FF">*     Seleciona dados</font>
+      PERFORM select_data.
+
+<font color ="#0000FF">*     Forma de Pagamento</font>
+      PERFORM customer_payment_method.
+
+<font color ="#0000FF">**     Trata campo endereço(street)</font>
+<font color ="#0000FF">*      PERFORM street_method.</font>
+
+<font color ="#0000FF">*     Batch Input Geral utilizado pela FD01 e FD02</font>
+      PERFORM customer_loads_bdc.
+
+<font color ="#0000FF">*     Executa transação</font>
+      PERFORM call_transaction USING v_trans
+                                     pi_mode.
+<font color ="#0000FF">**     Trata Retorno de Erro</font>
+<font color ="#0000FF">*      PERFORM process_erro_batch.</font>
+
+    WHEN zzifc_operation_itf_estornar OR "Estorno / Marcar para Deleção
+         zzifc_operation_itf_reativar.   "Desmarcar para Deleção
+
+<font color ="#0000FF">*     Batch input utilizado para marcar e desmarcar deleção</font>
+      PERFORM customer_deletion.
+
+<font color ="#0000FF">*     Executa transação</font>
+      PERFORM call_transaction USING 'FD06'
+                                     pi_mode.
+<font color ="#0000FF">**     Trata Retorno de Erro</font>
+<font color ="#0000FF">*      PERFORM process_erro_batch.</font>
+
+    WHEN zzifc_operation_itf_bloq OR     "Bloqueio
+         zzifc_operation_itf_desbloq.    "Desbloqueio.
+
+<font color ="#0000FF">*     Batch Input utilizado para o bloqueio de desbloqueio do Cliente</font>
+      PERFORM customer_block_unblock.
+
+<font color ="#0000FF">*     Executa transação</font>
+      PERFORM call_transaction USING 'FD05'
+                                     pi_mode.
+<font color ="#0000FF">**     Trata Retorno de Erro</font>
+<font color ="#0000FF">*      PERFORM process_erro_batch.</font>
+
+    WHEN OTHERS.
+
+  ENDCASE.
+ENDFUNCTION.
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: WA_MSG-MSGID</font>
+<font color ="#0000FF">* WA_</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZZIFM</font>
+<font color ="#0000FF">* 022 Cliente & já cadastrado para Empresa &</font>
+<font color ="#0000FF">* 023 Código do Cliente não confere com cadastramento no SAP</font>
+<font color ="#0000FF">* 024 Cliente & não encontrado para Empresa &</font>
+<font color ="#0000FF">* 035 Falta CNPJ/CPF para o Cliente & Empresa &</font>
+<font color ="#0000FF">* 037 Para o Cliente & Empresa &, campo Status não está preenchido corretamente</font>
+<font color ="#0000FF">* 038 A Estrutura de Dados do Cliente está vazia</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download 46cd version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 701
+</font>
+</body>
+</html>
